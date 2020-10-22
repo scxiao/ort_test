@@ -102,7 +102,7 @@ def main():
     ep_name = sys.argv[2]
 
     session = load_model(model_file, ep_name)
-    run_inference(session, 4)
+    run_inference(session, 1)
 
 if __name__ == "__main__":
     main()
