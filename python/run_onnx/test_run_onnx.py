@@ -7,6 +7,7 @@ import time
 import sys
 import os
 import argparse
+import json
 
 type_table = {
     'tensor(int64)' : np.int64,
@@ -39,8 +40,7 @@ def copy_onnx_file(model_file, dst_dir):
     cmd = 'cp ' + model_file + ' ' + dst_file
     os.system(cmd)
 
-
-def wrapup_inputs(session, default_batch_size):
+def wrapup_inputs(session, dim_val_dict, default_val):
     param_info = session.get_inputs()
     input_num = len(param_info)
     
@@ -58,7 +58,8 @@ def wrapup_inputs(session, default_batch_size):
         for index in range(len(dims)):
             if isinstance(dims[index], str) or dims[index] == 'None':
                 is_dynamic_shape = True
-                dims[index] = default_batch_size
+#if dims[index] in dim_val_dict.keys():
+                dims[index] = dim_val_dict[dims[index]] if dims[index] in dim_val_dict.keys() else default_val
 
         if is_dynamic_shape == True:
             print('Dynamic input shape, change shape to: {}'.format(dims))
@@ -116,8 +117,8 @@ def run_inference(session, input_data):
     return outputs
 
 
-def run_once(session, batch_size):
-    input_data = wrapup_inputs(session, batch_size)
+def run_once(session, dim_val_dict, default_val):
+    input_data = wrapup_inputs(session, dim_val_dict, default_val)
     param_info = session.get_inputs()
     input_num = len(param_info)
     
@@ -140,7 +141,7 @@ def run_once(session, batch_size):
         print(out_data[out_index])
 
 
-def create_cases(model_file, session, batch_size, out_dir, case_num):
+def create_cases(model_file, session, dim_val_dict, default_val, out_dir, case_num):
     #copy onnx file
     print("Copy {} to {}".format(model_file, out_dir))
     copy_onnx_file(model_file, out_dir)
@@ -148,7 +149,7 @@ def create_cases(model_file, session, batch_size, out_dir, case_num):
     for i in range(case_num):
         print("Create case {}".format(i))
         data_dir = out_dir + '/test_data_set_' + str(i)
-        input_data = wrapup_inputs(session, batch_size)
+        input_data = wrapup_inputs(session, dim_val_dict, default_val)
         write_inputs_to_files(input_data, data_dir)
 
         out_data = run_inference(session, input_data)
@@ -159,7 +160,8 @@ def create_cases(model_file, session, batch_size, out_dir, case_num):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run an onnx model")
-    parser.add_argument('--batch_size', type=int, metavar='batch_size', default=1, help='Specify the batch size used in the model')
+    parser.add_argument('--default_dim_val', type=int, metavar='deft_val', default=1, help='Specify the default value used for dim variables')
+    parser.add_argument('--var_dim', type=str, help='Specify the value of a variable dim')
     parser.add_argument('model', type=str, metavar='model_file', help='onnx file name of the model')
     parser.add_argument('--ep', type=str, metavar='ep_name', default="MIGraphX", help='Name of the execution provider, CPU or MIGraphX')
     parser.add_argument('--create_test', action='store_true', help='Creat a unit test for the run')
@@ -171,11 +173,16 @@ def parse_args():
 
 def main():
     args = parse_args()
-    batch_size = args.batch_size
+    default_val = args.default_dim_val
     model_file = args.model
     ep_name = args.ep
     out_dir = args.case_dir
     case_num = args.case_num
+    var_dim = args.var_dim
+
+    dim_val_dict = {}
+    if var_dim is not None:
+        dim_val_dict = json.loads(var_dim)
 
     # create a session
     session = load_model(model_file, ep_name)
@@ -183,9 +190,10 @@ def main():
     # copy model from source to distination
     if args.create_test:
         print("Test case write to folder: {}".format(out_dir))
-        create_cases(model_file, session, batch_size, out_dir, case_num)
+        create_cases(model_file, session, dim_val_dict, default_val, out_dir, case_num)
 
-    run_once(session, batch_size)
+    run_once(session, dim_val_dict, default_val)
+
 
 if __name__ == "__main__":
     main()
