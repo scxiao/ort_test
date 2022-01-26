@@ -15,9 +15,7 @@ link_directories(${ORT_LIBS})
 
 file(GLOB util_SRC "*.cpp")
 file(GLOB test_examples test_char_rnn.cpp)
-#file(GLOB util_HDR "*.hpp")
-#list(REMOVE_ITEM util_SRC ${test_examples})
-set(test_examples test_char_rnn.cpp)
+set(test_examples run_onnx.cpp)
 
 foreach(filepath_name ${test_examples})
     get_filename_component(src_name ${filepath_name} NAME)
