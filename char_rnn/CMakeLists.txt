@@ -3,14 +3,20 @@ project (Test_ORT)
 
 set (ORT_FOLDER /code/onnxruntime)
 set (ORT_LIBS ${ORT_FOLDER}/build/Linux/Release)
+#set (ORT_LIBS ${ORT_FOLDER}/build/Linux/Debug)
 set (CMAKE_CXX_STANDARD 14)
 set (CMAKE_VERBOSE_MAKEFILE ON)
 
-include_directories(${ORT_FOLDER}/include/onnxruntime 
+include_directories(${ORT_FOLDER}/include/onnxruntime
+		    ${ORT_FOLDER}/onnxruntime/
                     ${ORT_FOLDER}/include/onnxruntime/core/session)
                     
 link_directories(${ORT_LIBS})
 
+file(GLOB util_SRC "*.cpp")
+file(GLOB test_examples test_char_rnn.cpp)
+#file(GLOB util_HDR "*.hpp")
+#list(REMOVE_ITEM util_SRC ${test_examples})
 set(test_examples test_char_rnn.cpp)
 
 foreach(filepath_name ${test_examples})
