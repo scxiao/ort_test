@@ -9,6 +9,6 @@ mkdir build
 cd build
 cmake ..
 make
-./test_char_rnn ../onnx/char_rnn.onnx
+./run_onnx ../onnx/char_rnn.onnx
 ```
 
