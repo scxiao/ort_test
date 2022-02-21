@@ -26,9 +26,9 @@ def load_model(model_file, ep_name):
     so = onnxruntime.SessionOptions()
     so.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
     #Run the model on the backend
-    session = onnxruntime.InferenceSession(model_file, sess_options = so)
-    ep_name = ep_name + "ExecutionProvider"
-    session.set_providers([ep_name])
+    session = onnxruntime.InferenceSession(model_file, sess_options = so, providers=['MIGraphXExecutionProvider', 'CPUExecutionProvider'])
+    #ep_name = ep_name + "ExecutionProvider"
+    #session.set_providers([ep_name])
     return session
 
 
